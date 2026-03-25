@@ -1,4 +1,3 @@
--- Code your testbench here
 library IEEE;
 use IEEE.std_logic_1164.all;
 
@@ -6,65 +5,73 @@ entity led_blinker_tb is
 end led_blinker_tb;
 
 architecture behave of led_blinker_tb is
+    -- Constante para simular un reloj de 25 MHz (Periodo de 40 ns)
+    constant c_CLOCK_PERIOD : time := 40 ns; 
 
-      -- 25 MHz = 40 nanoseconds period
-      constant c_CLOCK_PERIOD : time := 40 ns; 
+    -- Señales para conectar al diseño bajo prueba (UUT)
+    signal r_CLOCK     : std_logic := '0';
+    signal r_ENABLE    : std_logic := '0';
+    signal r_SWITCH_1  : std_logic := '0';
+    signal r_SWITCH_2  : std_logic := '0';
+    signal w_LED_DRIVE : std_logic; 
 
+begin
 
-	 -- Aquí estamos creando los "cables" que en teoría conectaríamos al chip
-      signal r_CLOCK     : std_logic := '0';
-      signal r_ENABLE    : std_logic := '0';
-      signal r_SWITCH_1  : std_logic := '0';
-      signal r_SWITCH_2  : std_logic := '0';
-      signal w_LED_DRIVE : std_logic; 
-    -- En el component descr
-    component led_blinker is
-      port (
-        i_clock     : in  std_logic;
-        i_enable    : in  std_logic;
-        i_switch_1  : in  std_logic;
-        i_switch_2  : in  std_logic;
-        o_led       : out std_logic);
-    end component led_blinker;
-    
-    begin
-    -- Instantiate the Unit Under Test (UUT)
-    --El port map es el acto de soldar los cables a los pines del chip.
-    UUT : led_blinker
-      port map (
-        i_clock     => r_CLOCK,
-        i_enable    => r_ENABLE,
-        i_switch_1  => r_SWITCH_1,
-        i_switch_2  => r_SWITCH_2,
-        o_led       => w_LED_DRIVE
+    ---------------------------------------------------------
+    -- INSTANCIACIÓN: Conexión del diseño
+    ---------------------------------------------------------
+    -- Usamos Generic Map para poner límites pequeños (solo para simular)
+    UUT : entity work.led_blinker
+        generic map (
+            g_CNT_100HZ => 10,   -- Cambiamos 125,000 por 10
+            g_CNT_50HZ  => 20,   -- Cambiamos 250,000 por 20
+            g_CNT_10HZ  => 50,
+            g_CNT_1HZ   => 100
+        )
+        port map (
+            i_clock    => r_CLOCK,
+            i_enable   => r_ENABLE,
+            i_switch_1 => r_SWITCH_1,
+            i_switch_2 => r_SWITCH_2,
+            o_led      => w_LED_DRIVE
         );
-               
-    p_CLK_GEN : process is --es como si fuera un While (true) infinito
+
+    ---------------------------------------------------------
+    -- GENERACIÓN DE RELOJ: Bucle infinito
+    ---------------------------------------------------------
+    p_CLK_GEN : process is
     begin
-      wait for c_CLOCK_PERIOD/2;--estamos creando la señal cuadrada
-      r_CLOCK <= not r_CLOCK;
-    end process p_CLK_GEN; 
+        wait for c_CLOCK_PERIOD/2;
+        r_CLOCK <= not r_CLOCK;
+    end process; 
 
-    process            -- main testing
+    ---------------------------------------------------------
+    -- ESTÍMULOS: Pruebas principales
+    ---------------------------------------------------------
+    p_STIMULUS : process
     begin
-      r_ENABLE <= '1';
+        -- Habilitamos el sistema
+        r_ENABLE <= '1';
+        
+        -- Probar Selección 00 (Frecuencia más alta)
+        r_SWITCH_1 <= '0'; r_SWITCH_2 <= '0';
+        wait for 2 us;
+        
+        -- Probar Selección 01 (Frecuencia media-alta)
+        r_SWITCH_1 <= '0'; r_SWITCH_2 <= '1';
+        wait for 2 us;
 
-      r_SWITCH_1 <= '0';
-      r_SWITCH_2 <= '0';
-      wait for 1 us;
+        -- Probar Selección 10 (Frecuencia media-baja)
+        r_SWITCH_1 <= '1'; r_SWITCH_2 <= '0';
+        wait for 4 us;
 
-      r_SWITCH_1 <= '0';
-      r_SWITCH_2 <= '1';
-      wait for 1 us;
+        -- Probar Selección 11 (Frecuencia más baja)
+        r_SWITCH_1 <= '1'; r_SWITCH_2 <= '1';
+        wait for 8 us;
 
-      r_SWITCH_1 <= '1';
-      r_SWITCH_2 <= '0';
-      wait for 1 us;
-
-      r_SWITCH_1 <= '1';
-      r_SWITCH_2 <= '1';
-      wait for 1 us;
-	  assert false report "SIMULACION TERMINADA" severity failure;
+        -- Fin de la simulación (Truco para EDA Playground)
+        assert false report "Simulación completada con éxito" severity failure;
+        wait;
     end process;
 
-  end behave;
+end behave;
