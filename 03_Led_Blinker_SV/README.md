@@ -1,1 +1,1 @@
-
+Controlador en Verilog para el parpadeo de un LED con frecuencia ajustable. El sistema utiliza un multiplexor para seleccionar entre cuatro velocidades distintas (1Hz a 100Hz) y cuenta con una señal de habilitación (enable) para el control global de la salida.
